@@ -25,16 +25,22 @@ def index():
 @login_required
 def order():
     if request.method == 'POST':
-        name = request.form['name']
-        address = request.form['address']
-        flower_type = request.form['flower_type']
-        message = request.form['message']
+        # Получаем количество заказов из формы
+        order_count = int(request.form['order_count'])
+        
+        # Сохраняем каждый заказ в базу данных
+        for i in range(1, order_count + 1):
+            name = request.form[f'name{i}']
+            address = request.form[f'address{i}']
+            flower_type = request.form[f'flower_type{i}']
+            message = request.form.get(f'message{i}', '')  # Получаем сообщение или пустую строку, если его нет
 
-        # Сохранение заказа в базу данных
-        new_order = Order(name=name, address=address, flower_type=flower_type, message=message)
-        db.session.add(new_order)
-        db.session.commit()
+            new_order = Order(name=name, address=address, flower_type=flower_type, message=message)
+            db.session.add(new_order)
+        
+        db.session.commit()  # Коммитим все заказы одновременно
 
+        flash(f'Все заказы ({order_count} шт.) успешно добавлены!', 'success')
         return redirect(url_for('index'))
 
     return render_template('order.html')
