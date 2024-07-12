@@ -1,6 +1,6 @@
 from flask import Flask, render_template, url_for, flash, redirect, request
 from config import Config
-from models import db, bcrypt, login_manager, User, Order
+from models import db, bcrypt, login_manager, User, Order, Flower
 from forms import RegistrationForm, LoginForm
 from flask_login import login_user, current_user, logout_user, login_required
 
@@ -15,6 +15,17 @@ login_manager.init_app(app)
 with app.app_context():
     db.create_all()
 
+# Добавление некоторых цветов в базу данных при первом запуске
+with app.app_context():
+    if not Flower.query.first():
+        flowers = [
+            Flower(name='Роза', image_url='url_to_rose_image', length='50-56см', price=150),
+            Flower(name='Тюльпан', image_url='url_to_tulip_image', length='57-60см', price=120),
+            Flower(name='Лилия', image_url='url_to_lily_image', length='50-56см', price=180)
+        ]
+        db.session.bulk_save_objects(flowers)
+        db.session.commit()
+
 # Главная страница
 @app.route('/')
 def index():
@@ -25,25 +36,31 @@ def index():
 @login_required
 def order():
     if request.method == 'POST':
-        # Получаем количество заказов из формы
-        order_count = int(request.form['order_count'])
+        name = request.form['name']
+        address = request.form['address']
+        flower_type = request.form['flower_type']
+        message = request.form['message']
         
-        # Сохраняем каждый заказ в базу данных
-        for i in range(1, order_count + 1):
-            name = request.form[f'name{i}']
-            address = request.form[f'address{i}']
-            flower_type = request.form[f'flower_type{i}']
-            message = request.form.get(f'message{i}', '')  # Получаем сообщение или пустую строку, если его нет
-
-            new_order = Order(name=name, address=address, flower_type=flower_type, message=message)
-            db.session.add(new_order)
+        new_order = Order(name=name, address=address, flower_type=flower_type, message=message)
+        db.session.add(new_order)
+        db.session.commit()
         
-        db.session.commit()  # Коммитим все заказы одновременно
-
-        flash(f'Все заказы ({order_count} шт.) успешно добавлены!', 'success')
         return redirect(url_for('index'))
 
-    return render_template('order.html')
+    search_query = request.args.get('search', '')
+    length_filter = request.args.get('length', '')
+    price_filter = request.args.get('price', '')
+
+    flowers = Flower.query.filter(Flower.name.contains(search_query))
+    
+    if length_filter:
+        flowers = flowers.filter_by(length=length_filter)
+    if price_filter:
+        min_price, max_price = map(float, price_filter.split('-'))
+        flowers = flowers.filter(Flower.price.between(min_price, max_price))
+    
+    flowers = flowers.all()
+    return render_template('order.html', flowers=flowers, search_query=search_query, length_filter=length_filter, price_filter=price_filter)
 
 # Страница регистрации
 @app.route('/register', methods=['GET', 'POST'])
