@@ -19,29 +19,23 @@ with app.app_context():
 with app.app_context():
     if not Flower.query.first():
         flowers = [
-            Flower(name='Роза', image_url='url_to_rose_image', length='50-56см', price=150),
-            Flower(name='Тюльпан', image_url='url_to_tulip_image', length='57-60см', price=120),
-            Flower(name='Лилия', image_url='url_to_lily_image', length='50-56см', price=180)
+            Flower(name='Роза', image_url='images/rose.jpg', length=51, price=150),
+            Flower(name='Тюльпан', image_url='images/tulip.jpg', length=62, price=120),
+            Flower(name='Лилия', image_url='images/lily.jpg', length=56, price=180)
         ]
         db.session.bulk_save_objects(flowers)
         db.session.commit()
 
 # Главная страница
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html')
-
-# Страница оформления заказа
-@app.route('/order', methods=['GET', 'POST'])
-@login_required
-def order():
     if request.method == 'POST':
         name = request.form['name']
         address = request.form['address']
-        flower_type = request.form['flower_type']
+        flower_types = request.form.getlist('flower_type')
         message = request.form['message']
         
-        new_order = Order(name=name, address=address, flower_type=flower_type, message=message)
+        new_order = Order(name=name, address=address, flower_type=','.join(flower_types), message=message)
         db.session.add(new_order)
         db.session.commit()
         
@@ -54,13 +48,14 @@ def order():
     flowers = Flower.query.filter(Flower.name.contains(search_query))
     
     if length_filter:
-        flowers = flowers.filter_by(length=length_filter)
+        min_length, max_length = map(float, length_filter.split('-'))
+        flowers = flowers.filter(Flower.length.between(min_length, max_length))
     if price_filter:
         min_price, max_price = map(float, price_filter.split('-'))
         flowers = flowers.filter(Flower.price.between(min_price, max_price))
     
     flowers = flowers.all()
-    return render_template('order.html', flowers=flowers, search_query=search_query, length_filter=length_filter, price_filter=price_filter)
+    return render_template('index.html', flowers=flowers, search_query=search_query, length_filter=length_filter, price_filter=price_filter)
 
 # Страница регистрации
 @app.route('/register', methods=['GET', 'POST'])

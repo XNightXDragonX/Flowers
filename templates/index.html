@@ -8,6 +8,44 @@
 </head>
 <body>
     <h1>Добро пожаловать в наш магазин цветов!</h1>
-    <a href="{{ url_for('order') }}">Сделать заказ</a>
+
+    <form method="get" action="{{ url_for('index') }}">
+        <input type="text" name="search" placeholder="Поиск по названию" value="{{ search_query }}">
+        <select name="length">
+            <option value="">Все длины</option>
+            <option value="50-55" {% if length_filter == '50-55' %}selected{% endif %}>50-55 см</option>
+            <option value="56-60" {% if length_filter == '56-60' %}selected{% endif %}>56-60 см</option>
+            <option value="61-65" {% if length_filter == '61-65' %}selected{% endif %}>61-65 см</option>
+        </select>
+        <select name="price">
+            <option value="">Все цены</option>
+            <option value="120-150" {% if price_filter == '120-150' %}selected{% endif %}>120-150 рублей</option>
+            <option value="150-180" {% if price_filter == '150-180' %}selected{% endif %}>150-180 рублей</option>
+        </select>
+        <input type="submit" value="Фильтр">
+    </form>
+
+    <form action="{{ url_for('index') }}" method="post">
+        {% for flower in flowers %}
+        <div>
+            <img src="{{ url_for('static', filename=flower.image_url) }}" alt="{{ flower.name }}" width="100" height="100">
+            <h2>{{ flower.name }}</h2>
+            <p>Длина: {{ flower.length }} см</p>
+            <p>Цена: {{ flower.price }} рублей</p>
+            <input type="checkbox" name="flower_type" value="{{ flower.name }}"> Выбрать
+        </div>
+        {% endfor %}
+
+        <label for="name">Имя:</label><br>
+        <input type="text" id="name" name="name" required><br>
+        
+        <label for="address">Адрес:</label><br>
+        <input type="text" id="address" name="address" required><br>
+        
+        <label for="message">Сообщение:</label><br>
+        <textarea id="message" name="message" rows="4" cols="50"></textarea><br><br>
+        
+        <input type="submit" value="Отправить">
+    </form>
 </body>
 </html>
