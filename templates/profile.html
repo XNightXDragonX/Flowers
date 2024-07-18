@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Профиль</h1>
+    <p>Имя пользователя: {{ user.username }}</p>
+    <p>Email: {{ user.email }}</p>
+
+    <h2>Ваши заказы</h2>
+    {% if orders %}
+        <ul>
+            {% for order in orders %}
+                <li>
+                    <p>Заказ #{{ order_numbers[order.id] }}</p> <!-- Используем порядковый номер -->
+                    <p>Имя: {{ order.name }}</p>
+                    <p>Адрес: {{ order.address }}</p>
+                    <p>Тип цветов: {{ order.flower_type }}</p>
+                    <p>Сообщение: {{ order.message }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>У вас нет заказов.</p>
+    {% endif %}
+
+    <a href="{{ url_for('index') }}" class="btn">Назад в магазин</a>
+</body>
+</html>

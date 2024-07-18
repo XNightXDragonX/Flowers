@@ -1,16 +1,30 @@
 <!DOCTYPE html>
-<html lang="rus">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flower Shop</title>
+    <title>Магазин цветов</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <div class="navbar">
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('profile') }}">Профиль</a>
+            <a href="{{ url_for('logout') }}">Выйти из аккаунта</a>
+        {% else %}
+            <a href="{{ url_for('register') }}">Регистрация</a>
+            <a href="{{ url_for('login') }}">Войти</a>
+        {% endif %}
+    </div>
+
     <h1>Добро пожаловать в наш магазин цветов!</h1>
 
+    {% if order_created %}
+        <div class="notification">Ваш заказ создан!</div>
+    {% endif %}
+
     <form method="get" action="{{ url_for('index') }}">
-        <input type="text" name="search" placeholder="Поиск по названию" value="{{ search_query }}">
+        <input type="text" name="search" placeholder="Поиск по названию" autocomplete="off">
         <select name="length">
             <option value="">Все длины</option>
             <option value="50-55" {% if length_filter == '50-55' %}selected{% endif %}>50-55 см</option>
@@ -22,19 +36,23 @@
             <option value="120-150" {% if price_filter == '120-150' %}selected{% endif %}>120-150 рублей</option>
             <option value="150-180" {% if price_filter == '150-180' %}selected{% endif %}>150-180 рублей</option>
         </select>
-        <input type="submit" value="Фильтр">
+        <input type="submit" value="Отфильтровать" class="filter-button">
+        <!-- Добавленная кнопка -->
+        <input type="button" value="Перейти к заполнению формы" class="scroll-button" onclick="document.getElementById('order-form').scrollIntoView({ behavior: 'smooth' });">
     </form>
 
-    <form action="{{ url_for('index') }}" method="post">
-        {% for flower in flowers %}
-        <div>
-            <img src="{{ url_for('static', filename=flower.image_url) }}" alt="{{ flower.name }}" width="100" height="100">
-            <h2>{{ flower.name }}</h2>
-            <p>Длина: {{ flower.length }} см</p>
-            <p>Цена: {{ flower.price }} рублей</p>
-            <input type="checkbox" name="flower_type" value="{{ flower.name }}"> Выбрать
+    <form method="post" action="{{ url_for('index') }}" id="order-form">
+        <div class="flower-container">
+            {% for flower in flowers %}
+                <div class="flower-item">
+                    <img src="{{ url_for('static', filename=flower.image_url) }}" alt="{{ flower.name }}" width="100" height="100">
+                    <h2>{{ flower.name }}</h2>
+                    <p>Длина: {{ flower.length }} см</p>
+                    <p>Цена: {{ flower.price }} рублей</p>
+                    <input type="checkbox" name="flower_type" value="{{ flower.name }}"> Выбрать
+                </div>
+            {% endfor %}
         </div>
-        {% endfor %}
 
         <label for="name">Имя:</label><br>
         <input type="text" id="name" name="name" required><br>
