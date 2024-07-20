@@ -19,9 +19,9 @@ with app.app_context():
 with app.app_context():
     if not Flower.query.first():
         flowers = [
-            Flower(name='Роза', image_url='SHOP/static/images/rose.jpg', length=51, price=150),
-            Flower(name='Тюльпан', image_url='SHOP/static/images/tulip.jpg', length=62, price=120),
-            Flower(name='Лилия', image_url='SHOP/static/images/lily.jpg', length=56, price=180)
+            Flower(name='Роза', image_url='images/rose.jpg', length=51, price=150),
+            Flower(name='Тюльпан', image_url='images/tulip.jpg', length=62, price=120),
+            Flower(name='Лилия', image_url='images/lily.jpg', length=56, price=180)
         ]
         db.session.bulk_save_objects(flowers)
         db.session.commit()
@@ -30,15 +30,26 @@ with app.app_context():
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
+        if not current_user.is_authenticated:
+            flash('Пожалуйста, войдите в систему, чтобы сделать заказ.', 'danger')
+            return redirect(url_for('login'))
+
         name = request.form['name']
         address = request.form['address']
         flower_types = request.form.getlist('flower_type')
         message = request.form['message']
+
+        quantities = {}
+        for flower_type in flower_types:
+            quantity = request.form.get(f'quantity_{flower_type.lower()}', 0)
+            quantities[flower_type] = quantity
         
-        new_order = Order(name=name, address=address, flower_type=','.join(flower_types), message=message, user_id=current_user.id)
+        flower_type_str = ','.join([f"{flower} ({quantities[flower]} шт.)" for flower in flower_types])
+
+        new_order = Order(name=name, address=address, flower_type=flower_type_str, message=message, user_id=current_user.id)
         db.session.add(new_order)
         db.session.commit()
-        
+
         session['order_created'] = True  # Установить переменную сессии для указания, что заказ был создан
         return redirect(url_for('index'))
 
@@ -47,14 +58,14 @@ def index():
     price_filter = request.args.get('price', '')
 
     flowers = Flower.query.filter(Flower.name.contains(search_query))
-    
+
     if length_filter:
         min_length, max_length = map(float, length_filter.split('-'))
         flowers = flowers.filter(Flower.length.between(min_length, max_length))
     if price_filter:
         min_price, max_price = map(float, price_filter.split('-'))
         flowers = flowers.filter(Flower.price.between(min_price, max_price))
-    
+
     flowers = flowers.all()
 
     order_created = session.pop('order_created', False)  # Проверить и удалить переменную сессии

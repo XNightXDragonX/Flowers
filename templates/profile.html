@@ -17,7 +17,7 @@
             {% for order in orders %}
                 <li>
                     <p>Заказ #{{ order_numbers[order.id] }}</p> <!-- Используем порядковый номер -->
-                    <p>Имя: {{ order.name }}</p>
+                    <p>Имя получателя: {{ order.name }}</p>
                     <p>Адрес: {{ order.address }}</p>
                     <p>Тип цветов: {{ order.flower_type }}</p>
                     <p>Сообщение: {{ order.message }}</p>

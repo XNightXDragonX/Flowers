@@ -5,6 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Магазин цветов</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const flowerCheckboxes = document.querySelectorAll('input[name="flower_type"]');
+            flowerCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    handleCheckboxChange(this);
+                });
+            });
+
+            function handleCheckboxChange(checkbox) {
+                const flowerName = checkbox.value.toLowerCase();
+                const flowerNameGenitive = getGenitiveCase(flowerName);
+                const quantityContainer = document.getElementById('quantity-container');
+                if (checkbox.checked) {
+                    const quantityDiv = document.createElement('div');
+                    quantityDiv.id = `quantity-${flowerName}`;
+                    quantityDiv.innerHTML = `
+                        <label for="quantity_${flowerName}">Количество ${flowerNameGenitive} в букете:</label><br>
+                        <input type="number" id="quantity_${flowerName}" name="quantity_${flowerName}" min="1" required><br>
+                    `;
+                    quantityContainer.appendChild(quantityDiv);
+                } else {
+                    const quantityDiv = document.getElementById(`quantity-${flowerName}`);
+                    if (quantityDiv) {
+                        quantityContainer.removeChild(quantityDiv);
+                    }
+                }
+            }
+
+            function getGenitiveCase(flowerName) {
+                const genitiveCaseDict = {
+                    'роза': 'роз',
+                    'тюльпан': 'тюльпанов',
+                    'лилия': 'лилий'
+                };
+                return genitiveCaseDict[flowerName] || flowerName;
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="navbar">
@@ -37,7 +76,6 @@
             <option value="150-180" {% if price_filter == '150-180' %}selected{% endif %}>150-180 рублей</option>
         </select>
         <input type="submit" value="Отфильтровать" class="filter-button">
-        <!-- Добавленная кнопка -->
         <input type="button" value="Перейти к заполнению формы" class="scroll-button" onclick="document.getElementById('order-form').scrollIntoView({ behavior: 'smooth' });">
     </form>
 
@@ -54,8 +92,10 @@
             {% endfor %}
         </div>
 
-        <label for="name">Имя:</label><br>
+        <label for="name">Имя получателя:</label><br>
         <input type="text" id="name" name="name" required><br>
+
+        <div id="quantity-container"></div>
         
         <label for="address">Адрес:</label><br>
         <input type="text" id="address" name="address" required><br>
