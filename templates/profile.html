@@ -16,11 +16,13 @@
         <ul>
             {% for order in orders %}
                 <li>
-                    <p>Заказ #{{ order_numbers[order.id] }}</p> <!-- Используем порядковый номер -->
+                    <p>Заказ #{{ order_numbers[order.id] }}</p>
                     <p>Имя получателя: {{ order.name }}</p>
                     <p>Адрес: {{ order.address }}</p>
                     <p>Тип цветов: {{ order.flower_type }}</p>
                     <p>Сообщение: {{ order.message }}</p>
+                    <a href="{{ url_for('download_docx', order_id=order.id) }}" class="btn">Скачать DOCX</a>
+                    <a href="{{ url_for('download_pdf', order_id=order.id) }}" class="btn">Скачать PDF</a>
                 </li>
             {% endfor %}
         </ul>

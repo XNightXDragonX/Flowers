@@ -1,8 +1,18 @@
-from flask import Flask, render_template, url_for, flash, redirect, request, session
+from flask import Flask, abort, render_template, url_for, flash, redirect, request, session, send_file
+from flask_migrate import Migrate
 from config import Config
 from models import db, bcrypt, login_manager, User, Order, Flower
 from forms import RegistrationForm, LoginForm
 from flask_login import login_user, current_user, logout_user, login_required
+from flask_graphql import GraphQLView
+from schema import schema
+from decorators import admin_required
+from getpass import getpass
+import sys
+from docx import Document
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import io
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -10,6 +20,7 @@ app.config.from_object(Config)
 db.init_app(app)
 bcrypt.init_app(app)
 login_manager.init_app(app)
+migrate = Migrate(app, db)
 
 # Создание таблиц при первом запуске
 with app.app_context():
@@ -122,6 +133,105 @@ def profile():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+def admin_required(f):
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if current_user.role != 'admin':
+            abort(403)
+        return f(*args, **kwargs)
+    decorated_function.__name__ = f.__name__
+    return decorated_function
+
+@app.cli.command('create_admin')
+def create_admin():
+    username = input('Введите имя пользователя: ')
+    email = input('Введите email: ')
+    password = input('Введите пароль: ')
+
+    if User.query.filter_by(username=username).first():
+        print('Пользователь с таким именем уже существует.')
+        return
+    if User.query.filter_by(email=email).first():
+        print('Пользователь с таким email уже существует.')
+        return
+
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    admin_user = User(username=username, email=email, password=hashed_password, role='admin')
+    db.session.add(admin_user)
+    db.session.commit()
+    print('Администратор успешно создан.')
+
+app.add_url_rule(
+    '/graphql',
+    view_func=admin_required(GraphQLView.as_view('graphql', schema=schema, graphiql=True)),
+    methods=['GET', 'POST']
+)
+
+# Функция для генерации DOCX
+def create_docx(order):
+    doc = Document()
+    doc.add_heading('Заказ #{}'.format(order['order_number']), 0)
+    doc.add_paragraph('Имя получателя: {}'.format(order['name']))
+    doc.add_paragraph('Адрес: {}'.format(order['address']))
+    doc.add_paragraph('Тип цветов: {}'.format(order['flower_type']))
+    doc.add_paragraph('Сообщение: {}'.format(order['message']))
+    return doc
+
+# Маршрут для скачивания DOCX
+@app.route('/download/docx/<int:order_id>')
+@login_required
+def download_docx(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id:
+        abort(403)
+    
+    order_data = {
+        'order_number': order.id,
+        'name': order.name,
+        'address': order.address,
+        'flower_type': order.flower_type,
+        'message': order.message
+    }
+
+    doc = create_docx(order_data)
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name=f'order_{order.id}.docx', mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+
+# Функция для генерации PDF
+def create_pdf(order):
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+    c.drawString(100, 750, 'Заказ #{}'.format(order['order_number']))
+    c.drawString(100, 725, 'Имя получателя: {}'.format(order['name']))
+    c.drawString(100, 700, 'Адрес: {}'.format(order['address']))
+    c.drawString(100, 675, 'Тип цветов: {}'.format(order['flower_type']))
+    c.drawString(100, 650, 'Сообщение: {}'.format(order['message']))
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer
+
+# Маршрут для скачивания PDF
+@app.route('/download/pdf/<int:order_id>')
+@login_required
+def download_pdf(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id:
+        abort(403)
+    
+    order_data = {
+        'order_number': order.id,
+        'name': order.name,
+        'address': order.address,
+        'flower_type': order.flower_type,
+        'message': order.message
+    }
+
+    pdf_buffer = create_pdf(order_data)
+    return send_file(pdf_buffer, as_attachment=True, download_name=f'order_{order.id}.pdf', mimetype='application/pdf')
 
 if __name__ == '__main__':
     app.run(debug=True)
