@@ -4,32 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Профиль</title>
+    <!-- Подключение CSS файла для стилей -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <h1>Профиль</h1>
+    <!-- Отображение имени пользователя и email -->
     <p>Имя пользователя: {{ user.username }}</p>
     <p>Email: {{ user.email }}</p>
 
     <h2>Ваши заказы</h2>
+    <!-- Проверка наличия заказов у пользователя -->
     {% if orders %}
         <ul>
+            <!-- Перебор всех заказов пользователя -->
             {% for order in orders %}
                 <li>
+                    <!-- Отображение информации о каждом заказе -->
                     <p>Заказ #{{ order_numbers[order.id] }}</p>
                     <p>Имя получателя: {{ order.name }}</p>
                     <p>Адрес: {{ order.address }}</p>
                     <p>Тип цветов: {{ order.flower_type }}</p>
                     <p>Сообщение: {{ order.message }}</p>
+                    <!-- Ссылки для скачивания заказа в формате DOCX и PDF -->
                     <a href="{{ url_for('download_docx', order_id=order.id) }}" class="btn">Скачать DOCX</a>
                     <a href="{{ url_for('download_pdf', order_id=order.id) }}" class="btn">Скачать PDF</a>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
+        <!-- Сообщение, если у пользователя нет заказов -->
         <p>У вас нет заказов.</p>
     {% endif %}
 
+    <!-- Ссылка для возврата в магазин -->
     <a href="{{ url_for('index') }}" class="btn">Назад в магазин</a>
 </body>
 </html>

@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Регистрация</title>
+    <!-- Подключение CSS файла для стилей -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <h1>Регистрация</h1>
+    <!-- Вывод всплывающих сообщений (если есть) -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
+            <!-- Перебор всех всплывающих сообщений -->
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }}">
                     {{ message }}
@@ -17,36 +20,52 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
+    
+    <!-- Форма регистрации -->
     <form method="POST" action="{{ url_for('register') }}">
-        {{ form.hidden_tag() }}
+        {{ form.hidden_tag() }}  <!-- Защита от CSRF -->
+        
+        <!-- Поле ввода имени пользователя -->
         <p>
             {{ form.username.label }}<br>
             {{ form.username(size=32) }}<br>
+            <!-- Вывод ошибок валидации для имени пользователя -->
             {% for error in form.username.errors %}
                 <span style="color: red;">[{{ error }}]</span><br>
             {% endfor %}
         </p>
+        
+        <!-- Поле ввода email -->
         <p>
             {{ form.email.label }}<br>
             {{ form.email(size=32) }}<br>
+            <!-- Вывод ошибок валидации для email -->
             {% for error in form.email.errors %}
                 <span style="color: red;">[{{ error }}]</span><br>
             {% endfor %}
         </p>
+        
+        <!-- Поле ввода пароля -->
         <p>
             {{ form.password.label }}<br>
             {{ form.password(size=32) }}<br>
+            <!-- Вывод ошибок валидации для пароля -->
             {% for error in form.password.errors %}
                 <span style="color: red;">[{{ error }}]</span><br>
             {% endfor %}
         </p>
+        
+        <!-- Поле подтверждения пароля -->
         <p>
             {{ form.confirm_password.label }}<br>
             {{ form.confirm_password(size=32) }}<br>
+            <!-- Вывод ошибок валидации для подтверждения пароля -->
             {% for error in form.confirm_password.errors %}
                 <span style="color: red;">[{{ error }}]</span><br>
             {% endfor %}
         </p>
+        
+        <!-- Кнопка отправки формы -->
         <p>{{ form.submit() }}</p>
     </form>
 </body>

@@ -13,10 +13,14 @@ from docx import Document
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
 
+# Создание экземпляра Flask-приложения
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Инициализация расширений Flask
 db.init_app(app)
 bcrypt.init_app(app)
 login_manager.init_app(app)
@@ -37,7 +41,7 @@ with app.app_context():
         db.session.bulk_save_objects(flowers)
         db.session.commit()
 
-# Главная страница
+# Маршрут для главной страницы
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -54,14 +58,14 @@ def index():
         for flower_type in flower_types:
             quantity = request.form.get(f'quantity_{flower_type.lower()}', 0)
             quantities[flower_type] = quantity
-        
+
         flower_type_str = ','.join([f"{flower} ({quantities[flower]} шт.)" for flower in flower_types])
 
         new_order = Order(name=name, address=address, flower_type=flower_type_str, message=message, user_id=current_user.id)
         db.session.add(new_order)
         db.session.commit()
 
-        session['order_created'] = True  # Установить переменную сессии для указания, что заказ был создан
+        session['order_created'] = True  # Установка переменной сессии для указания, что заказ был создан
         return redirect(url_for('index'))
 
     search_query = request.args.get('search', '')
@@ -79,10 +83,10 @@ def index():
 
     flowers = flowers.all()
 
-    order_created = session.pop('order_created', False)  # Проверить и удалить переменную сессии
+    order_created = session.pop('order_created', False)  # Проверка и удаление переменной сессии
     return render_template('index.html', flowers=flowers, search_query=search_query, length_filter=length_filter, price_filter=price_filter, order_created=order_created)
 
-# Страница регистрации
+# Маршрут для страницы регистрации
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -104,7 +108,7 @@ def register():
             return redirect(url_for('login'))
     return render_template('register.html', form=form)
 
-# Страница входа
+# Маршрут для страницы входа
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -120,7 +124,7 @@ def login():
             flash('Неудачный вход. Пожалуйста, проверьте email и пароль.', 'danger')
     return render_template('login.html', form=form)
 
-# Страница профиля
+# Маршрут для страницы профиля
 @app.route('/profile')
 @login_required
 def profile():
@@ -128,12 +132,13 @@ def profile():
     order_numbers = {order.id: idx + 1 for idx, order in enumerate(orders)}
     return render_template('profile.html', user=current_user, orders=orders, order_numbers=order_numbers)
 
-# Маршрут для выхода
+# Маршрут для выхода из системы
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('login'))
 
+# Декоратор для проверки прав администратора
 def admin_required(f):
     @login_required
     def decorated_function(*args, **kwargs):
@@ -143,6 +148,7 @@ def admin_required(f):
     decorated_function.__name__ = f.__name__
     return decorated_function
 
+# Команда для создания администратора
 @app.cli.command('create_admin')
 def create_admin():
     username = input('Введите имя пользователя: ')
@@ -162,21 +168,48 @@ def create_admin():
     db.session.commit()
     print('Администратор успешно создан.')
 
+# Добавление маршрута для GraphQL
 app.add_url_rule(
     '/graphql',
     view_func=admin_required(GraphQLView.as_view('graphql', schema=schema, graphiql=True)),
     methods=['GET', 'POST']
 )
 
-# Функция для генерации DOCX
-def create_docx(order):
+# Функция для получения номера заказа пользователя
+def get_user_order_number(user_id, order_id):
+    orders = Order.query.filter_by(user_id=user_id).order_by(Order.id).all()
+    order_numbers = {order.id: idx + 1 for idx, order in enumerate(orders)}
+    return order_numbers.get(order_id)
+
+# Функция для генерации DOCX файла заказа
+def create_docx(order, order_number):
     doc = Document()
-    doc.add_heading('Заказ #{}'.format(order['order_number']), 0)
+    doc.add_heading('Заказ #{}'.format(order_number), 0)
     doc.add_paragraph('Имя получателя: {}'.format(order['name']))
     doc.add_paragraph('Адрес: {}'.format(order['address']))
     doc.add_paragraph('Тип цветов: {}'.format(order['flower_type']))
     doc.add_paragraph('Сообщение: {}'.format(order['message']))
     return doc
+
+# Регистрация шрифта DejaVuSans для поддержки кириллицы
+pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+
+# Функция для генерации PDF
+def create_pdf(order, order_number):
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+    # Установление шрифта перед добавлением текста
+    c.setFont('DejaVuSans', 12)
+    c.drawString(100, 750, 'Заказ #{}'.format(order_number))
+    c.drawString(100, 725, 'Имя получателя: {}'.format(order['name']))
+    c.drawString(100, 700, 'Адрес: {}'.format(order['address']))
+    c.drawString(100, 675, 'Тип цветов: {}'.format(order['flower_type']))
+    c.drawString(100, 650, 'Сообщение: {}'.format(order['message']))    
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer
+
 
 # Маршрут для скачивания DOCX
 @app.route('/download/docx/<int:order_id>')
@@ -186,33 +219,20 @@ def download_docx(order_id):
     if order.user_id != current_user.id:
         abort(403)
     
+    order_number = get_user_order_number(current_user.id, order_id)
     order_data = {
-        'order_number': order.id,
         'name': order.name,
         'address': order.address,
         'flower_type': order.flower_type,
         'message': order.message
     }
 
-    doc = create_docx(order_data)
-    buffer = io.BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name=f'order_{order.id}.docx', mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    doc = create_docx(order_data, order_number)
+    doc_buffer = io.BytesIO()
+    doc.save(doc_buffer)
+    doc_buffer.seek(0)
 
-# Функция для генерации PDF
-def create_pdf(order):
-    buffer = io.BytesIO()
-    c = canvas.Canvas(buffer, pagesize=letter)
-    c.drawString(100, 750, 'Заказ #{}'.format(order['order_number']))
-    c.drawString(100, 725, 'Имя получателя: {}'.format(order['name']))
-    c.drawString(100, 700, 'Адрес: {}'.format(order['address']))
-    c.drawString(100, 675, 'Тип цветов: {}'.format(order['flower_type']))
-    c.drawString(100, 650, 'Сообщение: {}'.format(order['message']))
-    c.showPage()
-    c.save()
-    buffer.seek(0)
-    return buffer
+    return send_file(doc_buffer, as_attachment=True, download_name=f'order_{order_number}.docx', mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
 # Маршрут для скачивания PDF
 @app.route('/download/pdf/<int:order_id>')
@@ -222,16 +242,16 @@ def download_pdf(order_id):
     if order.user_id != current_user.id:
         abort(403)
     
+    order_number = get_user_order_number(current_user.id, order_id)
     order_data = {
-        'order_number': order.id,
         'name': order.name,
         'address': order.address,
         'flower_type': order.flower_type,
         'message': order.message
     }
 
-    pdf_buffer = create_pdf(order_data)
-    return send_file(pdf_buffer, as_attachment=True, download_name=f'order_{order.id}.pdf', mimetype='application/pdf')
+    pdf_buffer = create_pdf(order_data, order_number)
+    return send_file(pdf_buffer, as_attachment=True, download_name=f'order_{order_number}.pdf', mimetype='application/pdf')
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Магазин цветов</title>
+    <!-- Подключение CSS файла для стилей -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -14,11 +15,13 @@
                 });
             });
 
+            // Обработка изменений состояния флажков
             function handleCheckboxChange(checkbox) {
                 const flowerName = checkbox.value.toLowerCase();
                 const flowerNameGenitive = getGenitiveCase(flowerName);
                 const quantityContainer = document.getElementById('quantity-container');
                 if (checkbox.checked) {
+                    // Добавление поля для ввода количества выбранного цветка
                     const quantityDiv = document.createElement('div');
                     quantityDiv.id = `quantity-${flowerName}`;
                     quantityDiv.innerHTML = `
@@ -27,6 +30,7 @@
                     `;
                     quantityContainer.appendChild(quantityDiv);
                 } else {
+                    // Удаление поля для ввода количества, если флажок снят
                     const quantityDiv = document.getElementById(`quantity-${flowerName}`);
                     if (quantityDiv) {
                         quantityContainer.removeChild(quantityDiv);
@@ -34,6 +38,7 @@
                 }
             }
 
+            // Функция для получения формы родительного падежа названия цветка
             function getGenitiveCase(flowerName) {
                 const genitiveCaseDict = {
                     'роза': 'роз',
@@ -46,6 +51,7 @@
     </script>
 </head>
 <body>
+    <!-- Навигационная панель -->
     <div class="navbar">
         {% if current_user.is_authenticated %}
             <a href="{{ url_for('profile') }}">Профиль</a>
@@ -62,6 +68,7 @@
         <div class="notification">Ваш заказ создан!</div>
     {% endif %}
 
+    <!-- Форма для фильтрации и поиска цветов -->
     <form method="get" action="{{ url_for('index') }}">
         <input type="text" name="search" placeholder="Поиск по названию" autocomplete="off">
         <select name="length">
@@ -79,6 +86,7 @@
         <input type="button" value="Перейти к заполнению формы" class="scroll-button" onclick="document.getElementById('order-form').scrollIntoView({ behavior: 'smooth' });">
     </form>
 
+    <!-- Форма для создания заказа -->
     <form method="post" action="{{ url_for('index') }}" id="order-form">
         <div class="flower-container">
             {% for flower in flowers %}
@@ -92,6 +100,7 @@
             {% endfor %}
         </div>
 
+        <!-- Поля для ввода данных о заказе -->
         <label for="name">Имя получателя:</label><br>
         <input type="text" id="name" name="name" required><br>
 

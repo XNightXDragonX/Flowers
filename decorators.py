@@ -1,7 +1,7 @@
 from flask import abort
 from flask_login import current_user
 
-def admin_required(f):
+def admin_required(f): #проверка на администратора(в основном файле декоратор импортируется и защищает /graphql)
     def wrap(*args, **kwargs):
         if current_user.is_authenticated and current_user.role == 'admin':
             return f(*args, **kwargs)

@@ -9,7 +9,7 @@ h1 {
 }
 
 form {
-    max-width: 1600px; /* Увеличим ширину формы */
+    max-width: 1600px; /* Увеличение ширины формы */
     margin: auto;
 }
 
@@ -50,14 +50,14 @@ input[type="submit"]:hover, .btn-primary:hover {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    max-width: 1400px; /* Увеличиваем максимальную ширину контейнера */
+    max-width: 1400px; /* Увеличение максимальной ширины контейнера */
     margin: auto;
 }
 
 .flower-item {
-    width: 12%; /* 100% / 8 items per row */
+    width: 12%;
     box-sizing: border-box;
-    margin: 1%; /* Adjust the margin as needed */
+    margin: 1%;
     text-align: center;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -149,7 +149,6 @@ input[type="submit"]:hover, .btn-primary:hover {
     color: white;
 }
 
-/* Notification styles */
 .notification {
     position: fixed;
     top: 0;
@@ -246,17 +245,17 @@ input[type="submit"]:hover, .btn-primary:hover {
 }
 
 .scroll-button:hover {
-    background-color: #45a049; /* Темнее зелёный при наведении */
+    background-color: #45a049; /* Темно зелёный при наведении */
 }
 
 input[type="checkbox"] {
-    transform: scale(2); /* Увеличить размер чекбокса в 2 раза */
+    transform: scale(2); /* Увеличение размер чекбокса в 2 раза */
     margin-right: 10px; /* Отступ между чекбоксом и текстом */
     vertical-align: middle; /* Выравнивание по вертикали */
 }
 
 label {
-    line-height: 2.5em; /* Устанавливает высоту строки текста для выравнивания с увеличенным чекбоксом */
+    line-height: 2.5em; /* Устанавление высоту строки текста для выравнивания с увеличенным чекбоксом */
 }
 
 @keyframes slideInOut {

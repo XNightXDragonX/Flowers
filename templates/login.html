@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вход</title>
+    <!-- Подключение CSS файла для стилей -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <h1>Вход</h1>
+    <!-- Вывод всплывающих сообщений (если есть) -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
+            <!-- Перебор всех всплывающих сообщений -->
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }}">
                     {{ message }}
@@ -17,25 +20,37 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
+    
+    <!-- Форма входа -->
     <form method="POST" action="{{ url_for('login') }}">
-        {{ form.hidden_tag() }}
+        {{ form.hidden_tag() }}  <!-- Защита от CSRF -->
+        
+        <!-- Поле ввода email -->
         <p>
             {{ form.email.label }}<br>
             {{ form.email(size=32) }}<br>
+            <!-- Вывод ошибок валидации для email -->
             {% for error in form.email.errors %}
                 <span style="color: red;">[{{ error }}]</span><br>
             {% endfor %}
         </p>
+        
+        <!-- Поле ввода пароля -->
         <p>
             {{ form.password.label }}<br>
             {{ form.password(size=32) }}<br>
+            <!-- Вывод ошибок валидации для пароля -->
             {% for error in form.password.errors %}
                 <span style="color: red;">[{{ error }}]</span><br>
             {% endfor %}
         </p>
+        
+        <!-- Поле для запоминания пользователя -->
         <p>
             {{ form.remember.label }} {{ form.remember() }}
         </p>
+        
+        <!-- Кнопки отправки формы и регистрации -->
         <div class="center-buttons">
             <p>{{ form.submit(class_='btn-primary') }}</p>
             <a class="btn-primary" href="{{ url_for('register') }}">Зарегистрироваться</a>
