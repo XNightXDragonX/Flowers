@@ -1,0 +1,12 @@
+Flask==3.0.3
+Flask-Bcrypt==1.0.1
+Flask-GraphQL==2.0.1
+Flask-Login==0.6.3
+Flask-Migrate==4.0.7
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.1
+graphene==2.1.9
+graphene-sqlalchemy==2.3.0
+python-docx==1.1.2
+reportlab==4.2.2
+docx
