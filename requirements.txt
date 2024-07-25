@@ -1,0 +1,12 @@
+Flask
+Flask-SQLAlchemy
+Flask-Bcrypt
+Flask-Login
+Flask-WTF
+SQLAlchemy
+graphene
+graphene-sqlalchemy
+Flask-GraphQL
+python-docx
+reportlab
+gunicorn
