@@ -1,11 +1,14 @@
+Flask
 flask
 Flask-SQLAlchemy
 Flask-Bcrypt
+Flask-Login
 flask_login
 Flask-WTF
 SQLAlchemy
 graphene
 graphene-sqlalchemy
+Flask-Graphql
 flask_graphql
 python-docx
 reportlab
