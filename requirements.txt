@@ -1,10 +1,13 @@
 Flask
 flask
-Flask-SQLAlchemy
+flask-SQLAlchemy
+flask_sqlalchemy
 Flask-Bcrypt
+flask_bcrypt
 Flask-Login
 flask_login
 Flask-WTF
+flask_wtf
 SQLAlchemy
 graphene
 graphene-sqlalchemy
